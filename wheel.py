@@ -100,10 +100,7 @@ DIGIT_MAPS = {
 
 class Spinner_Wheel():
     def __init__(self):
-        self.numbers = []
-        for i in range(50):
-            self.numbers.append(str(random.randint(111, 999)) + "-" + str(random.randint(1111, 9999)))
-
+        self.numbers, self.winner, self.winner_index = self.import_numbers()
         self.grid_size = Point(80, 45)
         self.screen = pygcurse.PygcurseWindow(self.grid_size.x, self.grid_size.y, fullscreen=False)
         self.screen._autoupdate = False
@@ -118,11 +115,22 @@ class Spinner_Wheel():
         return
 
 
+    def import_numbers(self):
+        #TODO: Import/read file
+        numbers = []
+        for i in range(10):
+            numbers.append(str(random.randint(111, 999)) + "-" + str(random.randint(1111, 9999)))
+        random.shuffle(numbers)
+        winner = random.choice(numbers)
+        winner_index = numbers.index(winner)
+        return numbers, winner, winner_index
+
     def print_border(self, color="yellow"):
         self.screen.fill('?', fgcolor=color, region=(0, 0, self.grid_size.x-1, 1))
         self.screen.fill('?', fgcolor=color, region=(0, self.grid_size.y-1, self.grid_size.x-1, 1))
         self.screen.fill('?', fgcolor=color, region=(0, 0, 1, self.grid_size.y-1))
         self.screen.fill('?', fgcolor=color, region=(self.grid_size.x-1, 0, 1, self.grid_size.y))
+        self.text(3, self.grid_size.y/2, ">>>>>", fgcolor=color)
 
 
     def map_digits(self, digits):
@@ -155,14 +163,20 @@ class Spinner_Wheel():
 
     def spin_wheel(self, wheel_map, rotations=1, speed=0):
         pygame.mixer.music.load("gwoopie.ogg")
-        pygame.mixer.music.play()
+        #pygame.mixer.music.play()
         current_row = 0
+        wheel_index = 2
         rotation_count = len(self.numbers) * DIGIT_MAPS["digit_dimensions"].y * rotations
         for i in range(rotation_count):
             if i % 10 == 0:
                 self.print_border("yellow")
             elif i % 5 == 0:
                 self.print_border("fuchsia")
+
+            if i % ((DIGIT_MAPS["digit_dimensions"].y) + 1) == 0:
+                wheel_index += 1
+                print self.numbers[wheel_index % len(self.numbers)], i
+
             self._print_wheel(wheel_map, current_row)
             self.screen.update()
             time.sleep(speed)
