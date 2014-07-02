@@ -161,20 +161,26 @@ class Spinner_Wheel():
             row_color = 250 - step * abs(center_row-row)
             self.text(15, row+1, ''.join(wheel_map[line]), fgcolor=(row_color, row_color, row_color, 0))
 
-    def spin_wheel(self, wheel_map, rotations=1, speed=0):
-        pygame.mixer.music.load("gwoopie.ogg")
-        #pygame.mixer.music.play()
+    def spin_wheel(self, wheel_map, rotations=1, speed=0, slow_speed=.002):
+        # pygame.mixer.music.load("gwoopie.ogg")
+        # pygame.mixer.music.play()
+        tick_sound = pygame.mixer.Sound("wheel_tick.wav")
         current_row = 0
         wheel_index = 2
-        rotation_count = len(self.numbers) * DIGIT_MAPS["digit_dimensions"].y * rotations
-        for i in range(rotation_count):
-            if i % 10 == 0:
+        wheel_tick = (DIGIT_MAPS["digit_dimensions"].y) + 1
+        ticks_per_rotation = len(self.numbers) * wheel_tick
+        total_rotation_ticks = ticks_per_rotation * rotations
+
+        for i in range(total_rotation_ticks):
+
+            if i % (wheel_tick * 2) == 0:
                 self.print_border("yellow")
-            elif i % 5 == 0:
+            elif i % wheel_tick == 0:
                 self.print_border("fuchsia")
 
-            if i % ((DIGIT_MAPS["digit_dimensions"].y) + 1) == 0:
+            if i % wheel_tick == 0:
                 wheel_index += 1
+                tick_sound.play()
                 print self.numbers[wheel_index % len(self.numbers)], i
 
             self._print_wheel(wheel_map, current_row)
@@ -182,8 +188,34 @@ class Spinner_Wheel():
             time.sleep(speed)
             current_row += 1
 
+        ticks_to_winner = wheel_tick * (self.winner_index-3)
+        slow_wheel_ticks = ticks_per_rotation + ticks_to_winner
+
+        for i in range(slow_wheel_ticks):
+
+            if i % (wheel_tick * 2) == 0:
+                self.print_border("yellow")
+            elif i % wheel_tick == 0:
+                self.print_border("fuchsia")
+
+            if i % wheel_tick == 0:
+                wheel_index += 1
+                tick_sound.play()
+                print self.numbers[wheel_index % len(self.numbers)], i
+
+            self._print_wheel(wheel_map, current_row)
+            self.screen.update()
+            time.sleep(slow_speed * i)  # better slowing equation here?
+            current_row += 1
+
+        print "WINNER:", self.winner
+        pygcurse.waitforkeypress()
+
+
+
+
 
 if __name__ == "__main__":
     wheel = Spinner_Wheel()
     wheel_map = wheel.make_wheel()
-    wheel.spin_wheel(wheel_map, rotations=10)
+    wheel.spin_wheel(wheel_map, rotations=1)
