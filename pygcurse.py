@@ -191,7 +191,7 @@ class PygcurseSurface(object):
         self._scrollcount = 0 # the number of times writing text to the bottom row has scrolled the screen up a line.
 
         if font is None:
-            self._font = pygame.font.Font(pygame.font.match_font("Lucida Console"), 15)
+            self._font = pygame.font.Font(pygame.font.match_font("Courier"), 15)
         else:
             self._font = font
 
