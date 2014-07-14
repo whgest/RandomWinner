@@ -26,7 +26,7 @@ def add_entrant(initials, number):
         with open(DATABASE) as fin:
             entrants = pickle.load(fin)
             entrants[number] = initials
-        pickle.dump(entrants, fin)
+            pickle.dump(entrants, fin)
         return True
     except:
         return False
