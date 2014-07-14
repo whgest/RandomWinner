@@ -5,6 +5,9 @@ import pygcurse
 import time, random
 import pyfiglet
 import pygame.mixer
+import string
+import SMS_Server
+import pickle
 
 class Point():
     def __init__(self, x, y):
@@ -15,12 +18,12 @@ class Point():
         return "[%s, %s]" % (self.x, self.y)
 
 
-DIGIT_DIMENSIONS = Point(5, 6)
+DIGIT_DIMENSIONS = Point(5, 7)
 
 def char_to_font(string):
-    f = pyfiglet.Figlet(font='moscow')
+    f = pyfiglet.Figlet(font='5x7')
     digit_map = []
-    for line in f.renderText(string).replace("#", u"█").split("\n"):
+    for line in f.renderText(string).replace("#", u"█").replace("/", u"█").replace("\\", u"█").replace("o", u"█").replace("-", u"█").replace("O", u"█").replace("0", u"█").split("\n"):
         digit_map.append(list(line))
     return digit_map
 
@@ -43,10 +46,15 @@ class Spinner_Wheel():
 
 
     def import_numbers(self):
-        #TODO: Import/read file
+        with open("entrants.txt") as fin:
+            entrants = pickle.load(fin)
+        keys = entrants.keys()
         numbers = []
-        for i in range(150):
-            numbers.append("AAA" + "  " + str(random.randint(1111, 9999)))
+        for number in keys:
+            numbers.append(number[-3:])
+        for i in range(50):
+            random_initials = random.choice(string.uppercase) + random.choice(string.uppercase) + random.choice(string.uppercase)
+            numbers.append(random_initials + " " + str(random.randint(1111, 9999)))
         self.random_seed = self.determine_seed(numbers)
         random.seed(self.random_key)
         random.shuffle(numbers)
@@ -139,38 +147,34 @@ class Spinner_Wheel():
             row_color = 250 - step * abs(center_row-row)
             self.text(15, row+3, ''.join(wheel_map[line]), fgcolor=(row_color, row_color, row_color, 0))
 
-    def spin_wheel(self, wheel_map, rotations=1, speed=0, slow_speed=.002, rows_per_tick=1):
-        # pygame.mixer.music.load("gwoopie.ogg")
-        # pygame.mixer.music.play()
-        tick_sound = pygame.mixer.Sound("wheel_tick.wav")
+    def spin_wheel(self, wheel_map, rotations=1):
+        start_time = time.time()
         center_row = self.grid_size.y/2
         current_row = 0
-        wheel_index = 2
+        wheel_index = 0
         wheel_tick = (DIGIT_DIMENSIONS.y) + 1
         ticks_per_rotation = len(self.numbers) * wheel_tick
-        total_rotation_ticks = ticks_per_rotation * rotations
+        ticks_to_winner = (self.winner_index-2) * wheel_tick
+        total_rotation_ticks = (ticks_per_rotation * rotations) + ticks_to_winner
 
+        update_interval = 7
+        slow_time = 0
+        start_slowing = False
+        print total_rotation_ticks
+        slow_time_delta = 0.004
         for i in range(total_rotation_ticks):
 
-            if i % (wheel_tick * 2) == 0:
-                self.print_border("yellow")
-            elif i % wheel_tick == 0:
-                self.print_border("fuchsia")
 
-            if i % wheel_tick == 0:
-                wheel_index += 1
-                tick_sound.play()
-                print self.numbers[wheel_index % len(self.numbers)], i
+            if i % (total_rotation_ticks/6) == 0 and update_interval > 2:
+                update_interval -= 1
+                print "SLOW DOWN!", update_interval
 
-            self._print_wheel(wheel_map, current_row)
-            self.screen.update()
-            time.sleep(speed)
-            current_row += rows_per_tick
+            if total_rotation_ticks - i <= 80 and not start_slowing:
+                start_slowing = True
 
-        ticks_to_winner = wheel_tick * (self.winner_index-2) -1
-        slow_wheel_ticks = ticks_per_rotation + ticks_to_winner
+            if start_slowing:
+                slow_time += slow_time_delta
 
-        for i in range(slow_wheel_ticks):
 
             if i % (wheel_tick * 2) == 0:
                 self.print_border("yellow")
@@ -179,30 +183,33 @@ class Spinner_Wheel():
 
             if i % wheel_tick == 0:
                 wheel_index += 1
-                tick_sound.play()
-                print self.numbers[wheel_index % len(self.numbers)], i
+                #tick_sound.play()
+                print self.numbers[wheel_index % len(self.numbers)], i, slow_time
+
+            if i % update_interval == 0:
+                self.screen.update()
 
             self._print_wheel(wheel_map, current_row)
-            self.screen.update()
-            time.sleep(slow_speed * i)  # better slowing equation here?
-            current_row += rows_per_tick
+            time.sleep(slow_time)
+
+            current_row += 1
+
 
         print "WINNER:", self.winner
+        SMS_Server.notify_winner(self.winner)
+        end_time = time.time()
+        print "WHEEL SPUN IN:", end_time - start_time
 
         while 1:
-            self.screen.settint(200, 100, 50, (11, center_row - 3, self.grid_size.x-20, 7))
+            self.screen.settint(200, 100, 50, (11, center_row - 3, self.grid_size.x-20, 8))
             self.screen.update()
             time.sleep(0.05)
-            self.screen.settint(100, 150, 70, (11, center_row - 3, self.grid_size.x-20, 7))
+            self.screen.settint(100, 150, 70, (11, center_row - 3, self.grid_size.x-20, 8))
             self.screen.update()
             time.sleep(0.05)
-
-        pygcurse.waitforkeypress()
-
-
 
 if __name__ == "__main__":
     wheel = Spinner_Wheel()
-    wheel.print_entrants()
+    #wheel.print_entrants()
     wheel_map = wheel.make_wheel()
-    wheel.spin_wheel(wheel_map, rotations=1, rows_per_tick=1)
+    wheel.spin_wheel(wheel_map, rotations=1)
