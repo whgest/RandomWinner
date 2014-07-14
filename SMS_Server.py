@@ -79,7 +79,7 @@ def download_entrants():
         return response
 
 @app.route('/clear', methods=['GET'])
-def download_entrants():
+def clear_db():
     with open(DATABASE) as fin:
         response = make_response(fin.read())
         response.headers["Content-Disposition"] = "attachment; filename=" + DATABASE
@@ -88,3 +88,4 @@ def download_entrants():
     return "cleared"
 
 
+app.run()
