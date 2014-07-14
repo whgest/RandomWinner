@@ -23,10 +23,14 @@ DATABASE = "entrants.txt"
 
 def add_entrant(initials, number):
     try:
-        with open(DATABASE) as fin:
-            entrants = pickle.load(fin)
-            entrants[number] = initials
-            pickle.dump(entrants, fin)
+        with open(DATABASE, "r") as fin:
+            if fin.read() != "":
+                entrants = pickle.load(fin)
+            else:
+                entrants = {}
+        entrants[number] = initials
+        with open(DATABASE, "w") as fout:
+            pickle.dump(entrants, fout)
         return True
     except:
         return False
