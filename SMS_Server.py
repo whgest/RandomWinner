@@ -87,5 +87,3 @@ def clear_db():
         fout.write('')
     return "cleared"
 
-
-app.run()
