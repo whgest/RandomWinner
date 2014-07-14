@@ -78,5 +78,13 @@ def download_entrants():
         response.headers["Content-Disposition"] = "attachment; filename=" + DATABASE
         return response
 
+@app.route('/clear', methods=['GET'])
+def download_entrants():
+    with open(DATABASE) as fin:
+        response = make_response(fin.read())
+        response.headers["Content-Disposition"] = "attachment; filename=" + DATABASE
+    with open(DATABASE, 'w') as fout:
+        fout.write('')
+    return response
 
 
