@@ -42,7 +42,7 @@ def notify_winner(winner):
 @app.route('/', methods=['GET', 'POST'])
 def receive_text():
     try:
-        initials = request.values.get('Body', None)[:3].upper().replace("@", "A").replace("$", "S").replace("*", "Z").replace("!, I")
+        initials = request.values.get('Body', None)[:3].upper().replace("@", "A").replace("$", "S").replace("*", "Z").replace("!", "I")
         number = request.values.get('From', None)
         if not initials or len(initials) < 3:
             raise TypeError
@@ -55,9 +55,11 @@ def receive_text():
             message = "Entry error. Please try again."
 
     except TypeError:
-        message = "Entry not successful: we need your initials (3 characters)! Please try again."
+        message = initials
+        message += "Entry not successful: we need your initials (3 characters)! Please try again."
     except IndexError:
-        message = "Entry not successful: we need your initials (3 characters)! Please try again."
+        message = initials
+        message += "Entry not successful: we need your initials (3 characters)! Please try again."
     except ValueError:
         message = "Those initials can not be used. Please try again."
 
