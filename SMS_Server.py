@@ -85,6 +85,6 @@ def download_entrants():
         response.headers["Content-Disposition"] = "attachment; filename=" + DATABASE
     with open(DATABASE, 'w') as fout:
         fout.write('')
-    return response
+    return "cleared"
 
 
