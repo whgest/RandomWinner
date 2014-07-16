@@ -6,7 +6,7 @@ import time, random
 import pyfiglet
 import pygame.mixer
 import SMS_Server
-import pickle
+import json
 import string
 
 class Point():
@@ -23,7 +23,7 @@ DIGIT_DIMENSIONS = Point(5, 7)
 def char_to_font(string):
     f = pyfiglet.Figlet(font='5x7')
     digit_map = []
-    for line in f.renderText(string).replace("#", u"█").replace("/", u"█").replace("\\", u"█").replace("o", u"█").replace("-", u"█").replace("O", u"█").replace("0", u"█").split("\n"):
+    for line in f.renderText(string).replace("#", u"■").split("\n"):
         digit_map.append(list(line))
     return digit_map
 
@@ -32,7 +32,7 @@ class Spinner_Wheel():
         self.random_key = ''
         self.entrants, self.numbers, self.winner, self.winner_index = self.import_numbers()
         self.grid_size = Point(80, 45)
-        self.screen = pygcurse.PygcurseWindow(self.grid_size.x, self.grid_size.y, fullscreen=False)
+        self.screen = pygcurse.PygcurseWindow(self.grid_size.x, self.grid_size.y, fullscreen=True)
         self.screen._autoupdate = False
         pygame.mixer.init()
 
@@ -47,7 +47,7 @@ class Spinner_Wheel():
 
     def import_numbers(self):
         # with open("entrants.txt") as fin:
-        #     entrants = pickle.load(fin)
+        #     entrants = json.load(fin)
         entrants = {}
         for i in range(50):
             random_initials = random.choice(string.uppercase) + random.choice(string.uppercase) + random.choice(string.uppercase)
@@ -63,40 +63,40 @@ class Spinner_Wheel():
         winner_index = keys.index(winner)
         return entrants, keys, winner, winner_index
 
-
-    def print_entrants(self):
-        try:
-            to_print = self.numbers[:149]
-        except IndexError:
-            to_print = self.numbers
-        self.print_border(border_only=True)
-        self.text(self.grid_size.x/2 - 4, 2, "PLAYERS:", fgcolor="yellow")
-        col = -3
-        for i, player in enumerate(to_print):
-            if i % 30 == 0:
-                col += 13
-            self.text(col, i % 20 + 4, player, fgcolor="white")
-        self.screen.update()
-        #time.sleep(5)
-        for col in range(len(self.numbers)/5):
-            self.screen.settint(100, 150, 70, (11+col*13, 4, 1, 30))
-            self.screen.settint(100, 150, 70, (16+col*13, 4, 1, 30))
-        self.screen.update()
-
-
-        self.text(self.grid_size.x/2 - 4, 34, "RANDOM SEED: ", fgcolor="yellow")
-        row = 35
-        col = 9
-        for i, char in enumerate(self.random_seed):
-            if i % 63 == 0:
-                row += 1
-                col = 9
-            col += 1
-            self.text(col, row, char, fgcolor="yellow")
-
-
-        self.screen.update()
-        pygcurse.waitforkeypress()
+    #
+    # def print_entrants(self):
+    #     try:
+    #         to_print = self.numbers[:149]
+    #     except IndexError:
+    #         to_print = self.numbers
+    #     self.print_border(border_only=True)
+    #     self.text(self.grid_size.x/2 - 4, 2, "PLAYERS:", fgcolor="yellow")
+    #     col = -3
+    #     for i, player in enumerate(to_print):
+    #         if i % 30 == 0:
+    #             col += 13
+    #         self.text(col, i % 20 + 4, player, fgcolor="white")
+    #     self.screen.update()
+    #     #time.sleep(5)
+    #     for col in range(len(self.numbers)/5):
+    #         self.screen.settint(100, 150, 70, (11+col*13, 4, 1, 30))
+    #         self.screen.settint(100, 150, 70, (16+col*13, 4, 1, 30))
+    #     self.screen.update()
+    #
+    #
+    #     self.text(self.grid_size.x/2 - 4, 34, "RANDOM SEED: ", fgcolor="yellow")
+    #     row = 35
+    #     col = 9
+    #     for i, char in enumerate(self.random_seed):
+    #         if i % 63 == 0:
+    #             row += 1
+    #             col = 9
+    #         col += 1
+    #         self.text(col, row, char, fgcolor="yellow")
+    #
+    #
+    #     self.screen.update()
+    #     pygcurse.waitforkeypress()
 
     def print_border(self, color="yellow", border_only=False, character="?"):
         self.screen.fill(character, fgcolor=color, region=(0, 0, self.grid_size.x-1, 1))
@@ -129,7 +129,10 @@ class Spinner_Wheel():
         wheel_map = []
         y = 0
         for number in self.numbers:
-            wheel_map.extend(self.map_digits(self.entrants[number] + " " + number[-4:]))
+            try:
+                wheel_map.extend(self.map_digits(self.entrants[number][:3] + " " + number[-4:]))
+            except IndexError:
+                continue
             y += DIGIT_DIMENSIONS.y + 1
         return wheel_map
 
@@ -160,9 +163,21 @@ class Spinner_Wheel():
         start_slowing = False
         print total_rotation_ticks
         slow_time_delta = 0.004
+        self.print_border("yellow")
+        self._print_wheel(wheel_map, current_row)
+        self.screen.update()
+        break_now2 = False
+        while 1:
+            for e in pygame.event.get():
+                if e.type == pygame.KEYDOWN and e.key == 27:
+                    exit()
+                if e.type == pygame.KEYDOWN and e.key == 32:
+                    print "spinnnnn"
+                    break_now2 = True
+            if break_now2:
+                break
+
         for i in range(total_rotation_ticks):
-
-
             if i % (total_rotation_ticks/6) == 0 and update_interval > 2:
                 update_interval -= 1
                 print "SLOW DOWN!", update_interval
@@ -199,7 +214,7 @@ class Spinner_Wheel():
             current_row += 1
 
         tick_sound.play()
-        time.sleep(0.3)
+
         print "WINNER:", self.winner
         #SMS_Server.notify_winner(self.winner)
         end_time = time.time()
@@ -208,11 +223,11 @@ class Spinner_Wheel():
         wheel_win.play()
         while 1:
             self.screen.settint(200, 100, 50, (11, center_row - 4, self.grid_size.x-20, 8))
-            self.print_border("yellow", character="!")
+            self.print_border("yellow", character="*")
             self.screen.update()
             time.sleep(0.05)
             self.screen.settint(100, 150, 70, (11, center_row - 4, self.grid_size.x-20, 8))
-            self.print_border("fuchsia", character="!")
+            self.print_border("fuchsia", character="*")
             self.screen.update()
             time.sleep(0.05)
             for e in pygame.event.get():
@@ -223,16 +238,18 @@ class Spinner_Wheel():
                     break_now = True
             if break_now:
                 break
-        main()
+        return
+
 
 def main():
-    print "initializing..."
-    wheel = Spinner_Wheel()
-    wheel_map = wheel.make_wheel()
-    rotations = 50/len(wheel.entrants)
-    if rotations < 1:
-        rotations = 1
-    wheel.spin_wheel(wheel_map, rotations=rotations)
+    while 1:
+        print "initializing..."
+        wheel = Spinner_Wheel()
+        wheel_map = wheel.make_wheel()
+        rotations = 50/len(wheel.entrants)
+        if rotations < 1:
+            rotations = 1
+        wheel.spin_wheel(wheel_map, rotations=rotations)
 
 if __name__ == "__main__":
     main()

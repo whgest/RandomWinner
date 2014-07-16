@@ -2,7 +2,7 @@ from twilio.rest import TwilioRestClient
 import twilio.twiml
 import os
 import json
-import StringIO
+import re
 
 from flask import Flask, request, make_response, session, redirect, url_for
 
@@ -61,10 +61,13 @@ def notify_winner(winner):
 @app.route('/', methods=['GET', 'POST'])
 def receive_text():
     try:
-        initials = request.values.get('Body', None)[:3].upper().replace("@", "A").replace("$", "S").replace("*", "Z").replace("!", "I")
+        initials = request.values.get('Body', None)[:3].upper()
         number = request.values.get('From', None)
-        if not initials or len(initials) < 3:
+        valid = re.match('^[\w ]+$') is not None
+        if not initials or len(initials) < 2 or not valid:
             raise TypeError
+        if len(initials) == 2:
+            initials += " "
         if initials in BANNED_INITIALS:
             raise ValueError
         success = add_entrant(initials, number)
