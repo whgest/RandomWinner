@@ -22,14 +22,16 @@ DATABASE = "entrants.txt"
 
 
 def add_entrant(initials, number):
-    with open(DATABASE, "r" "utf8") as fin:
-        entrants = json.load(fin)
-    entrants[number] = initials
-    with open(DATABASE, 'w' 'utf8') as fout:
-        json.dump(entrants, fout)
-    print "added", number
-    return True
-
+    try:
+        with open(DATABASE, "r" "utf8") as fin:
+            entrants = json.load(fin)
+        entrants[number] = initials
+        with open(DATABASE, 'w' 'utf8') as fout:
+            json.dump(entrants, fout)
+        print "added", number
+        return True
+    except:
+        return False
 
 def make_fixtures():
     try:
@@ -57,6 +59,12 @@ def notify_winner(winner):
                                      from_="+15129107535")
     print message.sid
 
+def notify_database_error(number):
+    body = "Database entry FAILED for phone number %s. Check logs immediately." % number
+    message = client.messages.create(body=body,
+                                     to="+15124843205",
+                                     from_="+15129107535")
+    print message.sid
 
 @app.route('/', methods=['GET', 'POST'])
 def receive_text():
@@ -75,6 +83,7 @@ def receive_text():
             message = "You've been entered! Initials recieved: %s. If you want to change your initials, just send a new message. --MUST BE PRESENT TO WIN.--" % initials
         else:
             message = "Entry error. Please try again."
+            notify_database_error(number)
 
     except TypeError:
         message = "Entry not successful: we need your initials (2-3 letters, no numbers or special characters). Please try again."
