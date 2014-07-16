@@ -16,7 +16,7 @@ AUTH_TOKEN = "c893ece55d239042f01e4aeca0427cd0"
 
 client = TwilioRestClient(ACCOUNT_SID, AUTH_TOKEN)
 
-BANNED_INITIALS = ["FAG, ASS, FUK, PEE, POO, SEX, TIT, CUM, JIZ, GAY"]
+BANNED_INITIALS = ["FAG", "ASS", "FUK", "PEE", "POO", "SEX", "TIT", "CUM", "JIZ", "GAY"]
 
 DATABASE = "entrants.txt"
 
@@ -77,9 +77,9 @@ def receive_text():
             message = "Entry error. Please try again."
 
     except TypeError:
-        message = "Entry not successful: we need your initials (3 characters)! Please try again."
+        message = "Entry not successful: we need your initials (2-3 letters, no numbers or special characters). Please try again."
     except IndexError:
-        message = "Entry not successful: we need your initials (3 characters)! Please try again."
+        message = "Entry not successful: we need your initials (2-3 letters, no numbers or special characters). Please try again."
     except ValueError:
         message = "Those initials can not be used. Please try again."
 
