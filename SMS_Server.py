@@ -17,7 +17,7 @@ AUTH_TOKEN = "c893ece55d239042f01e4aeca0427cd0"
 
 client = TwilioRestClient(ACCOUNT_SID, AUTH_TOKEN)
 
-BANNED_INITIALS = ["FAG", "ASS", "FUK", "PEE", "POO", "SEX", "TIT", "CUM", "JIZ", "GAY", "NIG"]
+BANNED_INITIALS = ["FAG", "FUQ", "ASS", "FUK", "FUC", "PEE", "POO", "SEX", "TIT", "CUM", "JIZ", "GAY", "NIG"]
 
 DATABASE = "entrants.txt"
 
@@ -25,6 +25,8 @@ def add_entrant(initials, number):
     try:
         with open(DATABASE, "r" "utf8") as fin:
             entrants = json.load(fin)
+            if not entrants:
+                raise ValueError
         entrants[number] = initials
     except:
         shutil.copy("entrantsbackup.txt", "entrants.txt")
@@ -64,7 +66,7 @@ def notify_database_error(number, err):
 
 def clear_db():
     with open(DATABASE, 'w') as fout:
-        fout.write('{}')
+        fout.write("""{"+15124843205": "WHG"}""")
 
 @app.route('/', methods=['GET', 'POST'])
 def receive_text():

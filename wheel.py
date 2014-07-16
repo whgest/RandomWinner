@@ -48,6 +48,7 @@ class Spinner_Wheel():
     def import_numbers(self):
         with open("entrants.txt") as fin:
             entrants = json.load(fin)
+        entrants.pop("+15124843205", None)
         #import string
         # entrants = {}
         # for i in range(50):
