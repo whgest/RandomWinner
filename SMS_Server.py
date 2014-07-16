@@ -63,7 +63,7 @@ def receive_text():
     try:
         initials = request.values.get('Body', None)[:3].upper()
         number = request.values.get('From', None)
-        valid = re.match('^[\w ]+$') is not None
+        valid = re.match('^[\w ]+$', initials) is not None
         if not initials or len(initials) < 2 or not valid:
             raise TypeError
         if len(initials) == 2:
@@ -77,11 +77,9 @@ def receive_text():
             message = "Entry error. Please try again."
 
     except TypeError:
-        message = initials
-        message += "Entry not successful: we need your initials (3 characters)! Please try again."
+        message = "Entry not successful: we need your initials (3 characters)! Please try again."
     except IndexError:
-        message = initials
-        message += "Entry not successful: we need your initials (3 characters)! Please try again."
+        message = "Entry not successful: we need your initials (3 characters)! Please try again."
     except ValueError:
         message = "Those initials can not be used. Please try again."
 
