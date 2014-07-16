@@ -5,9 +5,9 @@ import pygcurse
 import time, random
 import pyfiglet
 import pygame.mixer
-import string
 import SMS_Server
 import pickle
+import string
 
 class Point():
     def __init__(self, x, y):
@@ -30,7 +30,7 @@ def char_to_font(string):
 class Spinner_Wheel():
     def __init__(self):
         self.random_key = ''
-        self.numbers, self.winner, self.winner_index = self.import_numbers()
+        self.entrants, self.numbers, self.winner, self.winner_index = self.import_numbers()
         self.grid_size = Point(80, 45)
         self.screen = pygcurse.PygcurseWindow(self.grid_size.x, self.grid_size.y, fullscreen=False)
         self.screen._autoupdate = False
@@ -46,29 +46,23 @@ class Spinner_Wheel():
 
 
     def import_numbers(self):
-        with open("entrants.txt") as fin:
-            entrants = pickle.load(fin)
-        keys = entrants.keys()
-        numbers = []
-        for number in keys:
-            numbers.append(number[-3:])
+        # with open("entrants.txt") as fin:
+        #     entrants = pickle.load(fin)
+        entrants = {}
         for i in range(50):
             random_initials = random.choice(string.uppercase) + random.choice(string.uppercase) + random.choice(string.uppercase)
-            numbers.append(random_initials + " " + str(random.randint(1111, 9999)))
-        self.random_seed = self.determine_seed(numbers)
-        random.seed(self.random_key)
-        random.shuffle(numbers)
-        winner = random.choice(numbers)
-        winner_index = numbers.index(winner)
-        return numbers, winner, winner_index
+            entrants[str(random.randint(1111111111, 9999999999))] = random_initials
+        keys = entrants.keys()
+        if len(keys) > 150:
+            random.shuffle(keys)
+            keys = keys[:149]
 
-    def determine_seed(self, numbers):
-        seed = ''
-        for number in numbers:
-            seed += number[1]
-            seed += number[5]
-        print "SEED:", seed
-        return seed
+
+        random.seed(self.random_key)
+        winner = random.choice(keys)
+        winner_index = keys.index(winner)
+        return entrants, keys, winner, winner_index
+
 
     def print_entrants(self):
         try:
@@ -104,11 +98,11 @@ class Spinner_Wheel():
         self.screen.update()
         pygcurse.waitforkeypress()
 
-    def print_border(self, color="yellow", border_only=False):
-        self.screen.fill('?', fgcolor=color, region=(0, 0, self.grid_size.x-1, 1))
-        self.screen.fill('?', fgcolor=color, region=(0, self.grid_size.y-1, self.grid_size.x-1, 1))
-        self.screen.fill('?', fgcolor=color, region=(0, 0, 1, self.grid_size.y-1))
-        self.screen.fill('?', fgcolor=color, region=(self.grid_size.x-1, 0, 1, self.grid_size.y))
+    def print_border(self, color="yellow", border_only=False, character="?"):
+        self.screen.fill(character, fgcolor=color, region=(0, 0, self.grid_size.x-1, 1))
+        self.screen.fill(character, fgcolor=color, region=(0, self.grid_size.y-1, self.grid_size.x-1, 1))
+        self.screen.fill(character, fgcolor=color, region=(0, 0, 1, self.grid_size.y-1))
+        self.screen.fill(character, fgcolor=color, region=(self.grid_size.x-1, 0, 1, self.grid_size.y))
         if not border_only:
             self.text(3, self.grid_size.y/2, ">>>>>", fgcolor=color)
             self.text(21, 2, "PLAYER:" + (" "*23) + "NUMBER:", fgcolor=color)
@@ -135,7 +129,7 @@ class Spinner_Wheel():
         wheel_map = []
         y = 0
         for number in self.numbers:
-            wheel_map.extend(self.map_digits(number))
+            wheel_map.extend(self.map_digits(self.entrants[number] + " " + number[-4:]))
             y += DIGIT_DIMENSIONS.y + 1
         return wheel_map
 
@@ -148,9 +142,13 @@ class Spinner_Wheel():
             self.text(15, row+3, ''.join(wheel_map[line]), fgcolor=(row_color, row_color, row_color, 0))
 
     def spin_wheel(self, wheel_map, rotations=1):
+        # pygame.mixer.music.load("gwoopie.ogg")
+        # pygame.mixer.music.play()
+        tick_sound = pygame.mixer.Sound("Pickup_Coin56.wav")
+        wheel_win = pygame.mixer.Sound("wheel_finish.wav")
         start_time = time.time()
         center_row = self.grid_size.y/2
-        current_row = 0
+        current_row = 1
         wheel_index = 0
         wheel_tick = (DIGIT_DIMENSIONS.y) + 1
         ticks_per_rotation = len(self.numbers) * wheel_tick
@@ -183,33 +181,58 @@ class Spinner_Wheel():
 
             if i % wheel_tick == 0:
                 wheel_index += 1
-                #tick_sound.play()
+                tick_sound.play()
                 print self.numbers[wheel_index % len(self.numbers)], i, slow_time
 
             if i % update_interval == 0:
                 self.screen.update()
 
             self._print_wheel(wheel_map, current_row)
-            time.sleep(slow_time)
+
+            if (total_rotation_ticks - i) > wheel_tick:
+                time.sleep(slow_time)
+            elif (total_rotation_ticks - i) == wheel_tick:
+                time.sleep(1.5)
+            else:
+                pass
 
             current_row += 1
 
-
+        tick_sound.play()
+        time.sleep(0.3)
         print "WINNER:", self.winner
-        SMS_Server.notify_winner(self.winner)
+        #SMS_Server.notify_winner(self.winner)
         end_time = time.time()
         print "WHEEL SPUN IN:", end_time - start_time
-
+        break_now = False
+        wheel_win.play()
         while 1:
-            self.screen.settint(200, 100, 50, (11, center_row - 3, self.grid_size.x-20, 8))
+            self.screen.settint(200, 100, 50, (11, center_row - 4, self.grid_size.x-20, 8))
+            self.print_border("yellow", character="!")
             self.screen.update()
             time.sleep(0.05)
-            self.screen.settint(100, 150, 70, (11, center_row - 3, self.grid_size.x-20, 8))
+            self.screen.settint(100, 150, 70, (11, center_row - 4, self.grid_size.x-20, 8))
+            self.print_border("fuchsia", character="!")
             self.screen.update()
             time.sleep(0.05)
+            for e in pygame.event.get():
+                if e.type == pygame.KEYDOWN and e.key == 27:
+                    exit()
+                if e.type == pygame.KEYDOWN and e.key == 32:
+                    print "spinnnnn"
+                    break_now = True
+            if break_now:
+                break
+        main()
+
+def main():
+    print "initializing..."
+    wheel = Spinner_Wheel()
+    wheel_map = wheel.make_wheel()
+    rotations = 50/len(wheel.entrants)
+    if rotations < 1:
+        rotations = 1
+    wheel.spin_wheel(wheel_map, rotations=rotations)
 
 if __name__ == "__main__":
-    wheel = Spinner_Wheel()
-    #wheel.print_entrants()
-    wheel_map = wheel.make_wheel()
-    wheel.spin_wheel(wheel_map, rotations=1)
+    main()

@@ -1,7 +1,7 @@
 from twilio.rest import TwilioRestClient
 import twilio.twiml
 import os
-import pickle
+import json
 import StringIO
 
 from flask import Flask, request, make_response, session, redirect, url_for
@@ -22,26 +22,41 @@ DATABASE = "entrants.txt"
 
 
 def add_entrant(initials, number):
+    with open(DATABASE, "r" "utf8") as fin:
+        entrants = json.load(fin)
+    entrants[number] = initials
+    with open(DATABASE, 'w' 'utf8') as fout:
+        json.dump(entrants, fout)
+    print "added", number
+    return True
+
+
+def make_fixtures():
     try:
         with open(DATABASE, "r") as fin:
-            if fin.read() != "":
-                entrants = pickle.load(fin)
-            else:
-                entrants = {}
-        entrants[number] = initials
+            entrants = json.load(fin)
+        entrants["+15124843205"] = "WHG"
         with open(DATABASE, "w") as fout:
-            pickle.dump(entrants, fout)
+            json.dump(entrants, fout)
         return True
     except:
         return False
 
-
 def notify_winner(winner):
+    try:
+        with open(DATABASE, "r") as fin:
+            entrants = json.load(fin)
+            entrants.pop(winner, None)
+        with open(DATABASE, "w") as fout:
+            json.dump(entrants, fout)
+    except:
+        pass
     body = "CONGRATULATIONS! The wheel o' winners has chosen you! Show this text to the MC to claim your prize!"
     message = client.messages.create(body=body,
                                      to=winner,
                                      from_="+15129107535")
     print message.sid
+
 
 @app.route('/', methods=['GET', 'POST'])
 def receive_text():
@@ -84,6 +99,7 @@ def clear_db():
         response = make_response(fin.read())
         response.headers["Content-Disposition"] = "attachment; filename=" + DATABASE
     with open(DATABASE, 'w') as fout:
-        fout.write('')
+        fout.write('{}')
     return "cleared"
 
+#make_fixtures()
