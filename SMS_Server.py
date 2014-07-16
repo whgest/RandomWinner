@@ -42,7 +42,10 @@ def add_entrant(initials, number):
             json.dump(entrants, fout)
         print "added", number
         shutil.copy("entrants.txt", "entrantsbackup.txt")
-        send_email()
+        try:
+            send_email()
+        except:
+            pass
         return True, None
     except:
         print "dump failure"
