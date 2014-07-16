@@ -7,7 +7,7 @@ import pyfiglet
 import pygame.mixer
 import SMS_Server
 import json
-import string
+
 
 class Point():
     def __init__(self, x, y):
@@ -23,7 +23,7 @@ DIGIT_DIMENSIONS = Point(5, 7)
 def char_to_font(string):
     f = pyfiglet.Figlet(font='5x7')
     digit_map = []
-    for line in f.renderText(string).replace("#", u"■").split("\n"):
+    for line in f.renderText(string).replace("#", u"▉").split("\n"):
         digit_map.append(list(line))
     return digit_map
 
@@ -46,14 +46,15 @@ class Spinner_Wheel():
 
 
     def import_numbers(self):
-        # with open("entrants.txt") as fin:
-        #     entrants = json.load(fin)
-        entrants = {}
-        for i in range(50):
-            random_initials = random.choice(string.uppercase) + random.choice(string.uppercase) + random.choice(string.uppercase)
-            entrants[str(random.randint(1111111111, 9999999999))] = random_initials
+        with open("entrants.txt") as fin:
+            entrants = json.load(fin)
+        #import string
+        # entrants = {}
+        # for i in range(50):
+        #     random_initials = random.choice(string.uppercase) + random.choice(string.uppercase) + random.choice(string.uppercase)
+        #     entrants[str(random.randint(1111111111, 9999999999))] = random_initials
         keys = entrants.keys()
-        if len(keys) > 150:
+        if len(keys) > 160:
             random.shuffle(keys)
             keys = keys[:149]
 
@@ -216,7 +217,7 @@ class Spinner_Wheel():
         tick_sound.play()
 
         print "WINNER:", self.winner
-        #SMS_Server.notify_winner(self.winner)
+        SMS_Server.notify_winner(self.winner)
         end_time = time.time()
         print "WHEEL SPUN IN:", end_time - start_time
         break_now = False
