@@ -216,6 +216,7 @@ class Spinner_Wheel():
             current_row += 1
 
         tick_sound.play()
+        self.screen.update()
 
         print "WINNER:", self.winner
         SMS_Server.notify_winner(self.winner)

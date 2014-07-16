@@ -52,17 +52,23 @@ def notify_winner(winner):
     except:
         pass
     body = "CONGRATULATIONS! The Q2 wheel o' winners has chosen you! Show this text to claim your prize!"
-    message = client.messages.create(body=body,
-                                     to=winner,
-                                     from_="+15129107535")
-    print message.sid
+    try:
+        message = client.messages.create(body=body,
+                                         to=winner,
+                                         from_="+15129107535")
+        print message.sid
+    except:
+        notify_database_error(winner, "notify")
 
 def notify_database_error(number, err):
-    body = "Database entry FAILED for phone number %s. Error: %s." % (number, err)
-    message = client.messages.create(body=body,
-                                     to="+15124843205",
-                                     from_="+15129107535")
-    print message.sid
+    body = "SMS server FAILURE for phone number %s. Error: %s." % (number, err)
+    try:
+        message = client.messages.create(body=body,
+                                         to="+15124843205",
+                                         from_="+15129107535")
+        print message.sid
+    except:
+        pass
 
 def clear_db():
     with open(DATABASE, 'w') as fout:
@@ -70,6 +76,7 @@ def clear_db():
 
 @app.route('/', methods=['GET', 'POST'])
 def receive_text():
+    number = None
     if request.values.get('Body', None) == "CLEAR" and request.values.get('From', None) == "+15124843205":
         clear_db()
         resp = twilio.twiml.Response()
@@ -100,9 +107,12 @@ def receive_text():
     except ValueError:
         message = "Those initials can not be used. Please try again."
 
-    resp = twilio.twiml.Response()
-    resp.message(message)
-    return str(resp)
+    try:
+        resp = twilio.twiml.Response()
+        resp.message(message)
+        return str(resp)
+    except:
+        notify_database_error(number, "reply")
 
 @app.route('/entrants', methods=['GET'])
 def download_entrants():
